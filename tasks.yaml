@@ -1,0 +1,27 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: npm
+spec:
+  workspaces:
+    - name: source
+  steps:
+    - name: npm-install
+      image: node:20-buster-slim
+      workingDir: $(workspaces.source.path)
+      command: ["npm"]
+      args: ["install"]
+---
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: jasmine
+spec:
+  workspaces:
+    - name: source
+  steps:
+    - name: run-tests
+      image: node:20-buster-slim
+      workingDir: $(workspaces.source.path)
+      command: ["npx"]
+      args: ["jasmine"]

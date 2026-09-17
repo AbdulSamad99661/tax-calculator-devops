@@ -1,0 +1,18 @@
+apiVersion: tekton.dev/v1beta1
+kind: PipelineRun
+metadata:
+  generateName: tc-pipeline-run-
+spec:
+  pipelineRef:
+    name: tc-pipeline
+  params:
+    - name: git-url
+      value: https://github.com/ibm-developer-skills-network/tax-calculator
+    - name: git-revision
+      value: v2
+    - name: image-name
+      value: us.icr.io/sn-labs-$(params.namespace)/tax-calculator:v2
+  workspaces:
+    - name: pipeline-shared-workspace
+      persistentVolumeClaim:
+        claimName: pipelinerun-pvc
