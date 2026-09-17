@@ -1,0 +1,53 @@
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  name: tc-pipeline
+spec:
+  workspaces:
+    - name: pipeline-shared-workspace
+  params:
+    - name: git-url
+      type: string
+    - name: git-revision
+      type: string
+    - name: image-name
+      type: string
+  tasks:
+    - name: clone
+      taskRef:
+        name: git-clone
+      workspaces:
+        - name: output
+          workspace: pipeline-shared-workspace
+      params:
+        - name: url
+          value: $(params.git-url)
+        - name: revision
+          value: $(params.git-revision)
+    - name: npminstall
+      taskRef:
+        name: npm
+      runAfter:
+        - clone
+      workspaces:
+        - name: source
+          workspace: pipeline-shared-workspace
+    - name: tests
+      taskRef:
+        name: jasmine
+      runAfter:
+        - npminstall
+      workspaces:
+        - name: source
+          workspace: pipeline-shared-workspace
+    - name: build
+      taskRef:
+        name: buildah
+      runAfter:
+        - tests
+      workspaces:
+        - name: source
+          workspace: pipeline-shared-workspace
+      params:
+        - name: IMAGE
+          value: $(params.image-name)
