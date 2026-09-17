@@ -4,50 +4,52 @@ metadata:
   name: tc-pipeline
 spec:
   workspaces:
-    - name: pipeline-shared-workspace
+    - name: pipeline-workspace
   params:
-    - name: git-url
+    - name: repo-url
       type: string
-    - name: git-revision
+    - name: branch
       type: string
-    - name: image-name
+    - name: app-name
       type: string
   tasks:
     - name: clone
       taskRef:
         name: git-clone
+        kind: ClusterTask
       workspaces:
         - name: output
-          workspace: pipeline-shared-workspace
+          workspace: pipeline-workspace
       params:
         - name: url
-          value: $(params.git-url)
+          value: $(params.repo-url)
         - name: revision
-          value: $(params.git-revision)
+          value: $(params.branch)
     - name: npminstall
+      workspaces:
+        - name: source
+          workspace: pipeline-workspace
       taskRef:
         name: npm
       runAfter:
         - clone
+    - name: tests
       workspaces:
         - name: source
-          workspace: pipeline-shared-workspace
-    - name: tests
+          workspace: pipeline-workspace
       taskRef:
         name: jasmine
       runAfter:
         - npminstall
+    - name: build
       workspaces:
         - name: source
-          workspace: pipeline-shared-workspace
-    - name: build
+          workspace: pipeline-workspace
       taskRef:
         name: buildah
-      runAfter:
-        - tests
-      workspaces:
-        - name: source
-          workspace: pipeline-shared-workspace
+        kind: ClusterTask
       params:
         - name: IMAGE
-          value: $(params.image-name)
+          value: "us.icr.io/$(context.pipelineRun.namespace)/$(params.app-name)"
+      runAfter:
+        - tests

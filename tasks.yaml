@@ -6,11 +6,22 @@ spec:
   workspaces:
     - name: source
   steps:
-    - name: npm-install
+    - name: npminstall
       image: node:20-buster-slim
       workingDir: $(workspaces.source.path)
-      command: ["npm"]
-      args: ["install"]
+      script: |
+        #!/bin/bash
+        set -e
+
+        echo "***** Environment *****"
+        npm --version
+        pwd
+
+        echo "***** Cleaning npm cache *****"
+        npm cache clean --force
+
+        echo "***** Running npm install *****"
+        npm install
 ---
 apiVersion: tekton.dev/v1beta1
 kind: Task
@@ -20,8 +31,12 @@ spec:
   workspaces:
     - name: source
   steps:
-    - name: run-tests
+    - name: jasminetests
       image: node:20-buster-slim
       workingDir: $(workspaces.source.path)
-      command: ["npx"]
-      args: ["jasmine"]
+      script: |
+        #!/bin/bash
+        set -e
+
+        echo "***** Running jasminetests *****"
+        npx jasmine
